@@ -613,6 +613,9 @@ func handleSuccess(
 		common.LogUpstreamResponse(c, resp, bodyBytes, envCfg, "Gemini")
 	}
 
+	// 解开网关信封（如 Cline 把 choices/usage 包在 data 内），否则会被误判为空响应
+	bodyBytes = common.UnwrapGatewayEnvelope(c, "Gemini", bodyBytes)
+
 	// 根据上游类型转换响应
 	var geminiResp *types.GeminiResponse
 

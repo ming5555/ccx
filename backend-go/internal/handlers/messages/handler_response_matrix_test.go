@@ -99,6 +99,15 @@ func TestMessagesHandler_NonStreamMatrix_AllFourUpstreams(t *testing.T) {
 			expectedOutputTok: 5,
 		},
 		{
+			name:              "messages_handler_to_openai_gateway_envelope",
+			serviceType:       "openai",
+			responseBody:      `{"success":true,"data":{"id":"chatcmpl_1","object":"chat.completion","choices":[{"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}],"usage":{"prompt_tokens":13,"completion_tokens":5,"total_tokens":18}}}`,
+			expectedText:      "hi",
+			expectedStop:      "end_turn",
+			expectedInputTok:  13,
+			expectedOutputTok: 5,
+		},
+		{
 			name:              "messages_handler_to_gemini",
 			serviceType:       "gemini",
 			responseBody:      `{"candidates":[{"content":{"role":"model","parts":[{"text":"hi"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":17,"candidatesTokenCount":3,"totalTokenCount":20}}`,

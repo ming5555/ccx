@@ -75,6 +75,9 @@ func handleSuccess(
 		common.LogUpstreamResponse(c, resp, bodyBytes, envCfg, "Responses")
 	}
 
+	// 解开网关信封（如 Cline 把 choices/usage 包在 data 内），否则会被误判为空响应
+	bodyBytes = common.UnwrapGatewayEnvelope(c, "Responses", bodyBytes)
+
 	providerResp := &types.ProviderResponse{
 		StatusCode: resp.StatusCode,
 		Headers:    resp.Header,

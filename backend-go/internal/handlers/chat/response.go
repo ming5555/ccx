@@ -57,6 +57,9 @@ func handleSuccess(
 		common.LogUpstreamResponse(c, resp, bodyBytes, envCfg, "Chat")
 	}
 
+	// 解开网关信封（如 Cline 把 choices/usage 包在 data 内），否则会被误判为空响应
+	bodyBytes = common.UnwrapGatewayEnvelope(c, "Chat", bodyBytes)
+
 	switch upstreamType {
 	case "claude":
 		// 转换 Claude 响应为 OpenAI Chat 格式

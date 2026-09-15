@@ -108,6 +108,15 @@ func TestGeminiHandler_NonStreamMatrix_AllFourUpstreams(t *testing.T) {
 			expectedCandidatesTok: 5,
 		},
 		{
+			name:                  "gemini_handler_to_openai_gateway_envelope",
+			serviceType:           "openai",
+			responseBody:          `{"success":true,"data":{"id":"chatcmpl_1","model":"gpt-4o","choices":[{"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}],"usage":{"prompt_tokens":13,"completion_tokens":5,"total_tokens":18}}}`,
+			expectedText:          "hi",
+			expectedFinishReason:  "STOP",
+			expectedPromptTok:     13,
+			expectedCandidatesTok: 5,
+		},
+		{
 			name:                  "gemini_handler_to_responses",
 			serviceType:           "responses",
 			responseBody:          `{"id":"resp_1","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"hi"}]}],"usage":{"input_tokens":19,"output_tokens":9,"total_tokens":28}}`,

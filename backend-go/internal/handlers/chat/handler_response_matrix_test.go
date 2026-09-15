@@ -213,6 +213,49 @@ func TestChatHandler_NonStreamMatrix_Passthrough(t *testing.T) {
 	}
 }
 
+// TestChatHandler_NonStream_OpenAIGatewayEnvelope 验证 openai 透传路径会解开网关
+// {data:{...}} 信封，客户端拿到的是带顶层 choices 的标准 chat.completion。
+func TestChatHandler_NonStream_OpenAIGatewayEnvelope(t *testing.T) {
+	upstreamBody := `{"success":true,"data":{"id":"chatcmpl_1","object":"chat.completion","model":"gpt-4o","choices":[{"message":{"role":"assistant","content":"hi"},"finish_reason":"stop"}],"usage":{"prompt_tokens":13,"completion_tokens":5,"total_tokens":18}}}`
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(upstreamBody))
+	}))
+	defer upstream.Close()
+
+	router := newChatTestRouter(t, config.UpstreamConfig{
+		Name:        "openai_gateway_envelope",
+		BaseURL:     upstream.URL,
+		APIKeys:     []string{"sk-test"},
+		ServiceType: "openai",
+		Status:      "active",
+	})
+
+	w := performChatHandlerRequest(t, router, `{"model":"gpt-4o","messages":[{"role":"user","content":"hello"}]}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%s", w.Code, http.StatusOK, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode response: %v, body=%s", err, w.Body.String())
+	}
+	if _, ok := resp["data"]; ok {
+		t.Fatalf("响应仍带网关 data 信封: %s", w.Body.String())
+	}
+	choices, ok := resp["choices"].([]interface{})
+	if !ok || len(choices) == 0 {
+		t.Fatalf("choices = %#v, want non-empty array, body=%s", resp["choices"], w.Body.String())
+	}
+	choice, _ := choices[0].(map[string]interface{})
+	msg, _ := choice["message"].(map[string]interface{})
+	if msg["content"] != "hi" {
+		t.Fatalf("message.content = %v, want 'hi'", msg["content"])
+	}
+}
+
 // TestChatHandler_NonStreamMatrix_ResponsesConversion 验证 Chat 入口对 responses 上游
 // 走转换路径：上游 Responses 格式响应转换为 Chat 格式返回给客户端。
 func TestChatHandler_NonStreamMatrix_ResponsesConversion(t *testing.T) {
