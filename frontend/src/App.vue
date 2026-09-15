@@ -349,6 +349,7 @@
         <router-view
           @edit="editChannel"
           @delete="deleteChannel"
+          @capability-test="testChannelCapability"
           @refresh="refreshChannels"
           @error="showErrorToast"
           @success="showSuccessToast"
